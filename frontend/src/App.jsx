@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './index.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const RadioGroup = ({ label, options, value, onChange }) => (
   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
     <label>{label}</label>
@@ -69,7 +71,7 @@ function App() {
         ? { profile: formData } 
         : { chatText }
 
-      const response = await fetch('http://localhost:5000/api/analyze', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -116,7 +118,7 @@ function App() {
     setIsAssistantTyping(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/apply-assistant', {
+      const response = await fetch(`${API_BASE_URL}/api/apply-assistant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
