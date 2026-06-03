@@ -232,8 +232,20 @@ function App() {
       {/* SaaS Premium Navigation Bar */}
       <nav className="navbar">
         <div className="nav-brand" onClick={() => setView('landing')}>
-          <div className="brand-icon">S</div>
-          <h2>Scheme.AI</h2>
+          <div className="brand-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px var(--primary-glow))' }}>
+              <defs>
+                <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+              <circle cx="9" cy="12" r="5" stroke="url(#logo-grad)" strokeWidth="2.5" />
+              <circle cx="15" cy="12" r="5" stroke="url(#logo-grad)" strokeWidth="2.5" strokeDasharray="3 3" />
+              <path d="M12 9v6M9 12h6" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h2>SchemeSync</h2>
         </div>
         
         <div className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
@@ -261,19 +273,49 @@ function App() {
           >
             Analytics
           </span>
+          {/* Mobile-only status indicators inside the drawer */}
+          <div className="mobile-only-drawer-status">
+            <div className="quota-pill" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10b981', margin: '0.5rem 0', width: 'fit-content' }}>
+              <span className="quota-indicator" style={{ background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+              Live Grounded
+            </div>
+            <div className="quota-pill" style={{ margin: '0.5rem 0', width: 'fit-content' }}>
+              <span className="quota-indicator"></span>
+              15 RPM Free
+            </div>
+          </div>
         </div>
         
         <div className="nav-actions">
-          {/* Light/Dark Toggle */}
+          {/* Live Grounding status indicator (Hidden on mobile via CSS) */}
+          <div className="quota-pill grounding-desktop-only" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10b981' }}>
+            <span className="quota-indicator" style={{ background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+            Live Grounded
+          </div>
+
+          {/* Custom Slider Theme Toggle */}
           <button 
-            className="theme-toggle-btn" 
+            className={`theme-toggle-btn ${theme}`} 
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            <span className="toggle-track">
+              <span className={`toggle-thumb ${theme}`}>
+                {theme === 'dark' ? (
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M12 3a9 9 0 109 9 9.75 9.75 0 00-.67-3.4 6.78 6.78 0 01-8.3-8.3A10.15 10.15 0 0012 3z" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                    <circle cx="12" cy="12" r="5" />
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </span>
+            </span>
           </button>
           
-          <div className="quota-pill">
+          <div className="quota-pill quota-desktop-only">
             <span className="quota-indicator"></span>
             15 RPM Free
           </div>
@@ -300,12 +342,9 @@ function App() {
       {view === 'landing' && (
         <section className="landing-view">
           <div className="landing-hero">
-            <div className="badge-glowing">
-              <span>✨</span> Powered by Google Search Grounding
-            </div>
             <h1>Discover & Apply for Government <span>Benefits Instantly</span></h1>
             <p>
-              Scheme.AI bridges the gap between citizens and their benefits. Describe your profile in natural language or complete our structured wizard to query live government databases in real-time.
+              SchemeSync bridges the gap between citizens and their benefits. Describe your profile in natural language or complete our structured wizard to query live government databases in real-time.
             </p>
             <div className="hero-cta-wrapper">
               <button className="btn" onClick={() => setView('discover')}>
@@ -591,10 +630,11 @@ function App() {
                 <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h3 style={{ fontSize: '1.65rem' }}>AI Recommendations</h3>
-                    <p style={{ color: 'var(--text-muted)' }}>Top live matched schemes resolved using search grounding.</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Top live matched schemes resolved in real-time.</p>
                   </div>
-                  <div style={{ color: 'var(--sentiment-positive)', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                    🟢 Live Portals Checked
+                  <div className="grounding-badge-context">
+                    <span className="pulse-dot"></span>
+                    <span>Live Grounded</span>
                   </div>
                 </div>
                 
@@ -918,6 +958,60 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Footer component */}
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <div className="brand-logo-container">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="footer-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+                <circle cx="9" cy="12" r="5" stroke="url(#footer-logo-grad)" strokeWidth="2.5" />
+                <circle cx="15" cy="12" r="5" stroke="url(#footer-logo-grad)" strokeWidth="2.5" strokeDasharray="3 3" />
+                <path d="M12 9v6M9 12h6" stroke="url(#footer-logo-grad)" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <h3>SchemeSync</h3>
+            </div>
+            <p>Bridging the gap between citizens and their benefits through real-time search grounding and interactive companion assistance.</p>
+          </div>
+          
+          <div className="footer-links-grid">
+            <div className="footer-link-col">
+              <h4>Platform</h4>
+              <span className="footer-link" onClick={() => setView('landing')}>Home</span>
+              <span className="footer-link" onClick={() => setView('discover')}>AI Discover</span>
+              <span className="footer-link" onClick={() => setView('saved')}>My Schemes</span>
+              <span className="footer-link" onClick={() => setView('analytics')}>Analytics</span>
+            </div>
+            <div className="footer-link-col">
+              <h4>Resources</h4>
+              <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="footer-link">Gemini AI Studio</a>
+              <span className="footer-link">Documentation</span>
+              <span className="footer-link">API Sandbox</span>
+              <span className="footer-link">System Status</span>
+            </div>
+            <div className="footer-link-col">
+              <h4>Legal</h4>
+              <span className="footer-link">Privacy Policy</span>
+              <span className="footer-link">Terms of Service</span>
+              <span className="footer-link">Disclaimer</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="footer-bottom">
+          <p>© 2026 SchemeSync. All rights reserved.</p>
+          <div className="footer-grounding-disclaimer">
+            <span className="grounding-dot"></span>
+            <span>Real-time verification powered by <strong>Google Search Grounding</strong>. Information is dynamically verified from official government portals.</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
