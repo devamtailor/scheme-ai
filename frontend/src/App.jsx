@@ -22,6 +22,7 @@ const RadioGroup = ({ label, options, value, onChange }) => (
 
 function App() {
   const [activeTab, setActiveTab] = useState('form')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [formStep, setFormStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
@@ -153,11 +154,11 @@ function App() {
           <h2>Scheme.AI</h2>
         </div>
         
-        <div className="nav-links">
-          <span className="nav-link active">Discover</span>
-          <span className="nav-link" onClick={handleDemoMode}>Load Demo</span>
-          <span className="nav-link">Saved Schemes</span>
-          <span className="nav-link">Analytics</span>
+        <div className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          <span className="nav-link active" onClick={() => setIsMobileMenuOpen(false)}>Discover</span>
+          <span className="nav-link" onClick={() => { handleDemoMode(); setIsMobileMenuOpen(false); }}>Load Demo</span>
+          <span className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Saved Schemes</span>
+          <span className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Analytics</span>
         </div>
         
         <div className="nav-actions">
@@ -168,6 +169,19 @@ function App() {
           <div className="profile-avatar">
             {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
           </div>
+          <button 
+            className="mobile-menu-toggle" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none">
+              {isMobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
       </nav>
 
