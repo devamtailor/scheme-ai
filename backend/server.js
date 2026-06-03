@@ -49,30 +49,55 @@ function generateQueryKey(profile, chatText) {
  * Wrapper to call Google Gemini API with fallback key handling
  */
 async function callGemini(contents, config = {}) {
+  // Cascade fallback models list
+  const models = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not set in environment variables.');
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  try {
-    return await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite',
-      contents,
-      ...config
-    });
-  } catch (primaryError) {
-    const is429 = primaryError.message?.includes('429') || primaryError.status === 429;
-    if (is429 && process.env.FALLBACK_GEMINI_API_KEY) {
-      console.warn('[Warning] Primary API key rate-limited. Trying fallback key...');
-      const aiFallback = new GoogleGenAI({ apiKey: process.env.FALLBACK_GEMINI_API_KEY });
-      return await aiFallback.models.generateContent({
-        model: 'gemini-3.1-flash-lite',
-        contents,
-        ...config
-      });
+  // Fallback API keys array
+  const keys = [
+    { name: 'Primary', value: process.env.GEMINI_API_KEY },
+    { name: 'Fallback', value: process.env.FALLBACK_GEMINI_API_KEY }
+  ].filter(k => k.value);
+
+  let lastError = null;
+
+  // Try each model sequentially
+  for (const model of models) {
+    // Try each API key for the current model
+    for (const key of keys) {
+      try {
+        console.log(`[Gemini API] Trying model "${model}" using ${key.name} API key...`);
+        const ai = new GoogleGenAI({ apiKey: key.value });
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          ...config
+        });
+        console.log(`[Gemini API] Success: model "${model}" with ${key.name} API key.`);
+        return response;
+      } catch (err) {
+        lastError = err;
+        const isTransientError =
+          err.message?.includes('429') ||
+          err.status === 429 ||
+          err.message?.includes('503') ||
+          err.status === 503;
+
+        console.warn(`[Gemini API] Failed: model "${model}" with ${key.name} API key. Error: ${err.message}`);
+
+        if (!isTransientError) {
+          // Break immediately on structural/validation errors to avoid wasteful API cycles
+          throw err;
+        }
+      }
     }
-    throw primaryError;
   }
+
+  // Throw the last recorded error if all permutations failed
+  throw lastError;
 }
 
 /**
