@@ -232,19 +232,6 @@ function App() {
       {/* SaaS Premium Navigation Bar */}
       <nav className="navbar">
         <div className="nav-brand" onClick={() => setView('landing')}>
-          <div className="brand-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px var(--primary-glow))' }}>
-              <defs>
-                <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#a855f7" />
-                </linearGradient>
-              </defs>
-              <circle cx="9" cy="12" r="5" stroke="url(#logo-grad)" strokeWidth="2.5" />
-              <circle cx="15" cy="12" r="5" stroke="url(#logo-grad)" strokeWidth="2.5" strokeDasharray="3 3" />
-              <path d="M12 9v6M9 12h6" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
           <h2>SchemeSync</h2>
         </div>
         
@@ -964,17 +951,6 @@ function App() {
         <div className="footer-content">
           <div className="footer-brand">
             <div className="brand-logo-container">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="footer-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#a855f7" />
-                  </linearGradient>
-                </defs>
-                <circle cx="9" cy="12" r="5" stroke="url(#footer-logo-grad)" strokeWidth="2.5" />
-                <circle cx="15" cy="12" r="5" stroke="url(#footer-logo-grad)" strokeWidth="2.5" strokeDasharray="3 3" />
-                <path d="M12 9v6M9 12h6" stroke="url(#footer-logo-grad)" strokeWidth="2" strokeLinecap="round" />
-              </svg>
               <h3>SchemeSync</h3>
             </div>
             <p>Bridging the gap between citizens and their benefits through real-time search grounding and interactive companion assistance.</p>
