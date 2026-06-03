@@ -56,7 +56,7 @@ async function callGemini(contents, config = {}) {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     return await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents,
       ...config
     });
@@ -66,7 +66,7 @@ async function callGemini(contents, config = {}) {
       console.warn('[Warning] Primary API key rate-limited. Trying fallback key...');
       const aiFallback = new GoogleGenAI({ apiKey: process.env.FALLBACK_GEMINI_API_KEY });
       return await aiFallback.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.1-flash-lite',
         contents,
         ...config
       });
