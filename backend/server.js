@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 import Scheme from './models/Scheme.js';
 import CachedSchemeResponse from './models/SchemeCache.js';
+import User from './models/User.js';
 import { searchRateLimiter, validateAnalyzeInput } from './middleware/security.js';
 
 // Load environment variables
@@ -99,6 +102,144 @@ async function callGemini(contents, config = {}) {
   // Throw the last recorded error if all permutations failed
   throw lastError;
 }
+
+// Auth Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Authentication token required.' });
+
+  jwt.verify(token, process.env.JWT_SECRET || 'schemesync_dev_secret_key', (err, decoded) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired session token.' });
+    req.userId = decoded.userId;
+    next();
+  });
+};
+
+// POST /api/auth/signup
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password || password.length < 6) {
+      return res.status(400).json({ error: 'Valid email and a password of at least 6 characters are required.' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'An account with this email already exists.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      email: email.toLowerCase(),
+      password: hashedPassword
+    });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'schemesync_dev_secret_key', { expiresIn: '7d' });
+    res.status(201).json({
+      token,
+      email: user.email,
+      profile: user.profile,
+      savedSchemes: user.savedSchemes,
+      searchHistory: user.searchHistory
+    });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ error: 'Server error during signup.' });
+  }
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid email or password.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid email or password.' });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'schemesync_dev_secret_key', { expiresIn: '7d' });
+    res.json({
+      token,
+      email: user.email,
+      profile: user.profile,
+      savedSchemes: user.savedSchemes,
+      searchHistory: user.searchHistory
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error during login.' });
+  }
+});
+
+// POST /api/auth/sync
+app.post('/api/auth/sync', authenticateToken, async (req, res) => {
+  try {
+    const { profile, savedSchemes, searchHistory } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // 1. Merge Profile data
+    if (profile && Object.keys(profile).length > 0) {
+      user.profile = { ...user.profile.toObject(), ...profile };
+    }
+
+    // 2. Merge Saved Schemes
+    if (savedSchemes && Array.isArray(savedSchemes)) {
+      const mergedSchemes = [...user.savedSchemes];
+      for (const localScheme of savedSchemes) {
+        const dbSchemeIdx = mergedSchemes.findIndex(s => s.id === localScheme.id || s.name === localScheme.name);
+        if (dbSchemeIdx > -1) {
+          const dbScheme = mergedSchemes[dbSchemeIdx].toObject();
+          mergedSchemes[dbSchemeIdx] = {
+            ...dbScheme,
+            status: localScheme.status || dbScheme.status,
+            completedSteps: Array.from(new Set([...(dbScheme.completedSteps || []), ...(localScheme.completedSteps || [])])),
+            updatedAt: localScheme.updatedAt || dbScheme.updatedAt
+          };
+        } else {
+          mergedSchemes.push(localScheme);
+        }
+      }
+      user.savedSchemes = mergedSchemes;
+    }
+
+    // 3. Merge Search History
+    if (searchHistory && Array.isArray(searchHistory)) {
+      const mergedHistory = [...user.searchHistory];
+      for (const localHist of searchHistory) {
+        const exists = mergedHistory.some(h => h.query.trim().toLowerCase() === localHist.query.trim().toLowerCase() && 
+                                              Math.abs(new Date(h.timestamp) - new Date(localHist.timestamp)) < 5000);
+        if (!exists) {
+          mergedHistory.push(localHist);
+        }
+      }
+      user.searchHistory = mergedHistory;
+    }
+
+    await user.save();
+
+    res.json({
+      email: user.email,
+      profile: user.profile,
+      savedSchemes: user.savedSchemes,
+      searchHistory: user.searchHistory
+    });
+  } catch (err) {
+    console.error('Sync error:', err);
+    res.status(500).json({ error: 'Server error during sync.' });
+  }
+});
 
 /**
  * Route: Analyze and discover government schemes
