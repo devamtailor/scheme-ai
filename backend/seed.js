@@ -1,5 +1,8 @@
-const mongoose = require('mongoose');
-const Scheme = require('./models/Scheme');
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Scheme from './models/Scheme.js';
+
+dotenv.config();
 
 const schemesList = [
   {

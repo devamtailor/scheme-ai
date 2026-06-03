@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const schemeSchema = new mongoose.Schema({
   name: String,
@@ -16,4 +16,4 @@ const schemeSchema = new mongoose.Schema({
   apply_link: String
 });
 
-module.exports = mongoose.model('Scheme', schemeSchema);
+export default mongoose.model('Scheme', schemeSchema);
