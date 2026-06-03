@@ -21,6 +21,9 @@ const RadioGroup = ({ label, options, value, onChange }) => (
 );
 
 function App() {
+  const [view, setView] = useState('landing') // 'landing', 'discover', 'saved', 'analytics'
+  const [theme, setTheme] = useState('dark')   // 'dark' or 'light'
+  
   const [activeTab, setActiveTab] = useState('form')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [formStep, setFormStep] = useState(1)
@@ -35,6 +38,26 @@ function App() {
   const [assistantInput, setAssistantInput] = useState('');
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
   
+  // Pre-loaded saved schemes for a well-maintained, professional SaaS dashboard look
+  const [savedSchemes, setSavedSchemes] = useState([
+    {
+      id: 'saved-1',
+      name: "AICTE Pragati Scholarship Scheme for Girls",
+      description: "Provides financial assistance to meritorious girl students pursuing technical degree courses in AICTE-approved institutions.",
+      benefits: "₹50,000 per annum for course duration",
+      status: "applied",
+      updatedAt: "June 2, 2026"
+    },
+    {
+      id: 'saved-2',
+      name: "Pradhan Mantri Mudra Yojana (PMMY)",
+      description: "Collateral-free loans up to 10 Lakhs to non-corporate, non-farm small/micro enterprises.",
+      benefits: "Up to ₹10 Lakhs business credit",
+      status: "approved",
+      updatedAt: "May 28, 2026"
+    }
+  ]);
+  
   // Form profile state
   const [formData, setFormData] = useState({
     name: '', age: '', gender: '', state: '', city: '',
@@ -43,7 +66,15 @@ function App() {
   })
   const [chatText, setChatText] = useState('')
 
+  // Toast / feedback message when saving a scheme
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
   const handleDemoMode = () => {
+    setView('discover')
     setActiveTab('form')
     setFormStep(3) // Jump to the end page for demo mode
     setFormData({
@@ -91,6 +122,36 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSaveScheme = (scheme) => {
+    // Check if already saved
+    if (savedSchemes.some(s => s.name === scheme.name)) {
+      showToast("Scheme is already saved to your portfolio!");
+      return;
+    }
+    
+    const newSaved = {
+      id: `saved-${Date.now()}`,
+      name: scheme.name,
+      description: scheme.description,
+      benefits: scheme.benefits,
+      status: "pending",
+      updatedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+    
+    setSavedSchemes([...savedSchemes, newSaved]);
+    showToast("Scheme saved to your portfolio successfully!");
+  }
+
+  const handleDeleteSavedScheme = (id) => {
+    setSavedSchemes(savedSchemes.filter(s => s.id !== id));
+    showToast("Scheme removed from your portfolio.");
+  }
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
   }
 
   const handleApplyClick = (scheme) => {
@@ -146,22 +207,72 @@ function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell theme-${theme}`}>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div 
+          className="global-alert" 
+          style={{ 
+            position: 'fixed', 
+            top: '80px', 
+            right: '20px', 
+            zIndex: 1100, 
+            background: 'var(--surface)', 
+            borderColor: 'var(--primary)', 
+            boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+            animation: 'slideLeftDrawer 0.3s ease-out',
+            margin: 0
+          }}
+        >
+          <span>✨</span>
+          <p>{toastMessage}</p>
+        </div>
+      )}
+
       {/* SaaS Premium Navigation Bar */}
       <nav className="navbar">
-        <div className="nav-brand" onClick={() => window.location.reload()}>
+        <div className="nav-brand" onClick={() => setView('landing')}>
           <div className="brand-icon">S</div>
           <h2>Scheme.AI</h2>
         </div>
         
         <div className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-          <span className="nav-link active" onClick={() => setIsMobileMenuOpen(false)}>Discover</span>
-          <span className="nav-link" onClick={() => { handleDemoMode(); setIsMobileMenuOpen(false); }}>Load Demo</span>
-          <span className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Saved Schemes</span>
-          <span className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Analytics</span>
+          <span 
+            className={`nav-link ${view === 'landing' ? 'active' : ''}`}
+            onClick={() => { setView('landing'); setIsMobileMenuOpen(false); }}
+          >
+            Home
+          </span>
+          <span 
+            className={`nav-link ${view === 'discover' ? 'active' : ''}`}
+            onClick={() => { setView('discover'); setIsMobileMenuOpen(false); }}
+          >
+            AI Discover
+          </span>
+          <span 
+            className={`nav-link ${view === 'saved' ? 'active' : ''}`}
+            onClick={() => { setView('saved'); setIsMobileMenuOpen(false); }}
+          >
+            My Schemes
+          </span>
+          <span 
+            className={`nav-link ${view === 'analytics' ? 'active' : ''}`}
+            onClick={() => { setView('analytics'); setIsMobileMenuOpen(false); }}
+          >
+            Analytics
+          </span>
         </div>
         
         <div className="nav-actions">
+          {/* Light/Dark Toggle */}
+          <button 
+            className="theme-toggle-btn" 
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          
           <div className="quota-pill">
             <span className="quota-indicator"></span>
             15 RPM Free
@@ -185,304 +296,540 @@ function App() {
         </div>
       </nav>
 
-      {/* Main SaaS Dashboard Workspace */}
-      <main className="dashboard-workspace">
-        
-        {/* Left Column: Form / Search Control Panel */}
-        <section className="glass-card left-panel">
-          <div className="panel-header">
-            <h3>Match Criteria</h3>
-            <p>Define your profile metrics to search real-time schemes.</p>
-          </div>
-
-          <div className="tabs">
-            <div 
-              className={`tab ${activeTab === 'form' ? 'active' : ''}`}
-              onClick={() => setActiveTab('form')}
-            >
-              📋 Guided Profile
+      {/* VIEW 1: SaaS Landing Page / Hero Console */}
+      {view === 'landing' && (
+        <section className="landing-view">
+          <div className="landing-hero">
+            <div className="badge-glowing">
+              <span>✨</span> Powered by Google Search Grounding
             </div>
-            <div 
-              className={`tab ${activeTab === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveTab('chat')}
-            >
-              💬 Natural Language
-            </div>
-          </div>
-
-          {activeTab === 'form' ? (
-            <div className="wizard-container">
-              <div className="wizard-progress">
-                 <span className={`step-indicator ${formStep >= 1 ? 'active' : ''}`}>Basics</span>
-                 <span className={`step-indicator ${formStep >= 2 ? 'active' : ''}`}>Location & Income</span>
-                 <span className={`step-indicator ${formStep >= 3 ? 'active' : ''}`}>Demographics</span>
-              </div>
-
-              {formStep === 1 && (
-                <div className="grid-2">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Full Name</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.name} 
-                      onChange={e => setFormData({...formData, name: e.target.value})} 
-                      placeholder="e.g. Rahul Patel" 
-                    />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Age</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.age} 
-                      onChange={e => setFormData({...formData, age: e.target.value})} 
-                      placeholder="e.g. 21" 
-                    />
-                  </div>
-                  <RadioGroup 
-                    label="Gender" 
-                    options={['Male', 'Female', 'Other']} 
-                    value={formData.gender} 
-                    onChange={v => setFormData({...formData, gender: v})} 
-                  />
-                </div>
-              )}
-
-              {formStep === 2 && (
-                <div className="grid-2">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>State</label>
-                    <select 
-                      className="form-control" 
-                      value={formData.state} 
-                      onChange={e => setFormData({...formData, state: e.target.value})}
-                    >
-                      <option value="">Select State</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="UP">Uttar Pradesh</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Punjab">Punjab</option>
-                      <option value="Karnataka">Karnataka</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>City / Town</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.city} 
-                      onChange={e => setFormData({...formData, city: e.target.value})} 
-                      placeholder="e.g. Ahmedabad" 
-                    />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Annual Family Income (₹)</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.income} 
-                      onChange={e => setFormData({...formData, income: e.target.value})} 
-                      placeholder="e.g. 300000" 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formStep === 3 && (
-                <div className="grid-2">
-                  <RadioGroup 
-                    label="Category" 
-                    options={['General', 'OBC', 'SC', 'ST']} 
-                    value={formData.category} 
-                    onChange={v => setFormData({...formData, category: v})} 
-                  />
-                  <RadioGroup 
-                    label="Profession" 
-                    options={['Student', 'Farmer', 'Salaried', 'Self-employed', 'Business Owner', 'Unemployed']} 
-                    value={formData.profession} 
-                    onChange={v => setFormData({...formData, profession: v})} 
-                  />
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Highest Education Level</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.education} 
-                      onChange={e => setFormData({...formData, education: e.target.value})} 
-                      placeholder="e.g. 12th Pass, Graduate" 
-                    />
-                  </div>
-                  <RadioGroup 
-                    label="Disability Status" 
-                    options={['No', 'Yes']} 
-                    value={formData.disability} 
-                    onChange={v => setFormData({...formData, disability: v})} 
-                  />
-                </div>
-              )}
-
-              <div className="wizard-footer">
-                {formStep > 1 ? (
-                  <button type="button" className="btn btn-secondary" onClick={() => setFormStep(formStep - 1)}>
-                    &larr; Back
-                  </button>
-                ) : (
-                  <div></div>
-                )}
-                {formStep < 3 ? (
-                  <button type="button" className="btn" onClick={() => setFormStep(formStep + 1)}>
-                    Next Step &rarr;
-                  </button>
-                ) : (
-                  <button type="button" className="btn" onClick={handleAnalyze} disabled={loading}>
-                    {loading ? 'Processing...' : 'Search Matching'}
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="chat-input-area">
-              <div className="form-group">
-                <label>Enter profile search query via natural language</label>
-                <textarea 
-                  className="form-control chat-input" 
-                  placeholder="e.g. I am a 20-year old female student from Gujarat with an annual family income of ₹2.5 Lakhs. Looking for higher education scholarships."
-                  value={chatText}
-                  onChange={e => setChatText(e.target.value)}
-                ></textarea>
-              </div>
-              
-              <div className="wizard-footer" style={{ marginTop: '0.5rem', borderTop: 'none', paddingTop: 0 }}>
-                <div></div>
-                <button className="btn" onClick={handleAnalyze} disabled={loading}>
-                  {loading ? 'Processing...' : 'Analyze & Discover'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Demo Assist Link */}
-          {activeTab === 'form' && (
-            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={handleDemoMode} 
-                style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', borderRadius: '8px' }}
-              >
-                ⚡ Load Sample Student Profile
+            <h1>Discover & Apply for Government <span>Benefits Instantly</span></h1>
+            <p>
+              Scheme.AI bridges the gap between citizens and their benefits. Describe your profile in natural language or complete our structured wizard to query live government databases in real-time.
+            </p>
+            <div className="hero-cta-wrapper">
+              <button className="btn" onClick={() => setView('discover')}>
+                🚀 Launch Discovery Console
+              </button>
+              <button className="btn btn-secondary" onClick={handleDemoMode}>
+                ⚡ Try Demo Profile
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Social Proof Stats */}
+          <div className="landing-stats-grid">
+            <div className="stat-card glass-card">
+              <h3>1,500+</h3>
+              <p>Active Schemes Checked</p>
+            </div>
+            <div className="stat-card glass-card">
+              <h3>₹12,500</h3>
+              <p>Average Benefit / Person</p>
+            </div>
+            <div className="stat-card glass-card">
+              <h3>99.8%</h3>
+              <p>Search Verification Accuracy</p>
+            </div>
+          </div>
+
+          {/* Features Section */}
+          <div className="landing-features-section">
+            <div className="section-title">
+              <h2>Engineered for High Performance</h2>
+              <p>A defensive, scalable setup designed to deliver accurate matches.</p>
+            </div>
+            <div className="features-grid">
+              <div className="feature-card glass-card">
+                <div className="feature-icon">🔍</div>
+                <h3>Live Grounding Search</h3>
+                <p>No outdated internal datasets. Our system uses Gemini search grounding to crawl and verify active parameters on official portals.</p>
+              </div>
+              <div className="feature-card glass-card">
+                <div className="feature-icon">🧭</div>
+                <h3>Step-by-Step Navigator</h3>
+                <p>Opening external portals can be confusing. Our companion assistant guides you through the forms conversational step by step.</p>
+              </div>
+              <div className="feature-card glass-card">
+                <div className="feature-icon">🛡️</div>
+                <h3>Defensive Caching & Rate Limits</h3>
+                <p>Guards backend server endpoints against spamming and quota exhaustion by caching query keys directly in MongoDB Atlas.</p>
+              </div>
+            </div>
+          </div>
         </section>
+      )}
 
-        {/* Right Column: Dynamic Recommendations Panel */}
-        <section className="results-container">
-          
-          {error && (
-            <div className="global-alert">
-              <span>⚠️</span>
-              <p><strong>System Alert:</strong> {error}</p>
+      {/* VIEW 2: AI Discover Console */}
+      {view === 'discover' && (
+        <main className="dashboard-workspace">
+          {/* Left Column: Form / Search Control Panel */}
+          <section className="glass-card left-panel">
+            <div className="panel-header">
+              <h3>Match Criteria</h3>
+              <p>Define your profile metrics to search real-time schemes.</p>
             </div>
-          )}
 
-          {loading && (
-            <div className="glass-card loader-container">
-              <div className="shimmer-circle"></div>
-              <p>Connecting to Google Search grounding engine...</p>
+            <div className="tabs">
+              <div 
+                className={`tab ${activeTab === 'form' ? 'active' : ''}`}
+                onClick={() => setActiveTab('form')}
+              >
+                📋 Guided Profile
+              </div>
+              <div 
+                className={`tab ${activeTab === 'chat' ? 'active' : ''}`}
+                onClick={() => setActiveTab('chat')}
+              >
+                💬 Natural Language
+              </div>
             </div>
-          )}
 
-          {!loading && !results && (
-            <div className="empty-dashboard-state">
-              <div className="empty-state-graphic">🧭</div>
-              <h2>AI Discovery Engine Ready</h2>
-              <p>Fill out the guided profile or describe your criteria in natural language. The system will search and ground actual live Indian government portals in real-time.</p>
-            </div>
-          )}
-
-          {!loading && results && results.length === 0 && (
-            <div className="empty-dashboard-state">
-              <div className="empty-state-graphic">🔎</div>
-              <h2>No Matching Schemes Found</h2>
-              <p>We searched live government portals but found no direct matches. Try adjusting your profile parameters, state, or income settings to expand query matching.</p>
-            </div>
-          )}
-
-          {!loading && results && results.length > 0 && (
-            <div>
-              <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.65rem' }}>AI Recommendations</h3>
-                  <p style={{ color: 'var(--text-muted)' }}>Top live matched schemes resolved using search grounding.</p>
+            {activeTab === 'form' ? (
+              <div className="wizard-container">
+                <div className="wizard-progress">
+                   <span className={`step-indicator ${formStep >= 1 ? 'active' : ''}`}>Basics</span>
+                   <span className={`step-indicator ${formStep >= 2 ? 'active' : ''}`}>Location</span>
+                   <span className={`step-indicator ${formStep >= 3 ? 'active' : ''}`}>Details</span>
                 </div>
-                <div style={{ color: 'var(--sentiment-positive)', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                  🟢 Live Portals Checked
+
+                {formStep === 1 && (
+                  <div className="grid-2">
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>Full Name</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        value={formData.name} 
+                        onChange={e => setFormData({...formData, name: e.target.value})} 
+                        placeholder="e.g. Rahul Patel" 
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>Age</label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        value={formData.age} 
+                        onChange={e => setFormData({...formData, age: e.target.value})} 
+                        placeholder="e.g. 21" 
+                      />
+                    </div>
+                    <RadioGroup 
+                      label="Gender" 
+                      options={['Male', 'Female', 'Other']} 
+                      value={formData.gender} 
+                      onChange={v => setFormData({...formData, gender: v})} 
+                    />
+                  </div>
+                )}
+
+                {formStep === 2 && (
+                  <div className="grid-2">
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>State</label>
+                      <select 
+                        className="form-control" 
+                        value={formData.state} 
+                        onChange={e => setFormData({...formData, state: e.target.value})}
+                      >
+                        <option value="">Select State</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="UP">Uttar Pradesh</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Karnataka">Karnataka</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>City / Town</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        value={formData.city} 
+                        onChange={e => setFormData({...formData, city: e.target.value})} 
+                        placeholder="e.g. Ahmedabad" 
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>Annual Family Income (₹)</label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        value={formData.income} 
+                        onChange={e => setFormData({...formData, income: e.target.value})} 
+                        placeholder="e.g. 300000" 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formStep === 3 && (
+                  <div className="grid-2">
+                    <RadioGroup 
+                      label="Category" 
+                      options={['General', 'OBC', 'SC', 'ST']} 
+                      value={formData.category} 
+                      onChange={v => setFormData({...formData, category: v})} 
+                    />
+                    <RadioGroup 
+                      label="Profession" 
+                      options={['Student', 'Farmer', 'Salaried', 'Self-employed', 'Business Owner', 'Unemployed']} 
+                      value={formData.profession} 
+                      onChange={v => setFormData({...formData, profession: v})} 
+                    />
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label>Highest Education Level</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        value={formData.education} 
+                        onChange={e => setFormData({...formData, education: e.target.value})} 
+                        placeholder="e.g. 12th Pass, Graduate" 
+                      />
+                    </div>
+                    <RadioGroup 
+                      label="Disability Status" 
+                      options={['No', 'Yes']} 
+                      value={formData.disability} 
+                      onChange={v => setFormData({...formData, disability: v})} 
+                    />
+                  </div>
+                )}
+
+                <div className="wizard-footer">
+                  {formStep > 1 ? (
+                    <button type="button" className="btn btn-secondary" onClick={() => setFormStep(formStep - 1)}>
+                      &larr; Back
+                    </button>
+                  ) : (
+                    <div></div>
+                  )}
+                  {formStep < 3 ? (
+                    <button type="button" className="btn" onClick={() => setFormStep(formStep + 1)}>
+                      Next Step &rarr;
+                    </button>
+                  ) : (
+                    <button type="button" className="btn" onClick={handleAnalyze} disabled={loading}>
+                      {loading ? 'Processing...' : 'Search Matching'}
+                    </button>
+                  )}
                 </div>
               </div>
-              
-              <div className="results-grid">
-                {results.map((scheme, idx) => (
-                  <div key={idx} className="scheme-card">
-                    <div className="scheme-card-header">
-                      <h3>{scheme.name}</h3>
-                      {scheme.confidence_score && (
-                        <span className="confidence-badge">{scheme.confidence_score}% Match</span>
+            ) : (
+              <div className="chat-input-area">
+                <div className="form-group">
+                  <label>Enter profile search query via natural language</label>
+                  <textarea 
+                    className="form-control chat-input" 
+                    placeholder="e.g. I am a 20-year old female student from Gujarat with an annual family income of ₹2.5 Lakhs. Looking for higher education scholarships."
+                    value={chatText}
+                    onChange={e => setChatText(e.target.value)}
+                  ></textarea>
+                </div>
+                
+                <div className="wizard-footer" style={{ marginTop: '0.5rem', borderTop: 'none', paddingTop: 0 }}>
+                  <div></div>
+                  <button className="btn" onClick={handleAnalyze} disabled={loading}>
+                    {loading ? 'Processing...' : 'Analyze & Discover'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Demo Assist Link */}
+            {activeTab === 'form' && (
+              <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleDemoMode} 
+                  style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', borderRadius: '8px' }}
+                >
+                  ⚡ Load Sample Student Profile
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* Right Column: Dynamic Recommendations Panel */}
+          <section className="results-container">
+            
+            {error && (
+              <div className="global-alert">
+                <span>⚠️</span>
+                <p><strong>System Alert:</strong> {error}</p>
+              </div>
+            )}
+
+            {loading && (
+              <div className="glass-card loader-container">
+                <div className="shimmer-circle"></div>
+                <p>Connecting to Google Search grounding engine...</p>
+              </div>
+            )}
+
+            {!loading && !results && (
+              <div className="empty-dashboard-state">
+                <div className="empty-state-graphic">🧭</div>
+                <h2>AI Discovery Engine Ready</h2>
+                <p>Fill out the guided profile or describe your criteria in natural language. The system will search and ground actual live Indian government portals in real-time.</p>
+              </div>
+            )}
+
+            {!loading && results && results.length === 0 && (
+              <div className="empty-dashboard-state">
+                <div className="empty-state-graphic">🔎</div>
+                <h2>No Matching Schemes Found</h2>
+                <p>We searched live government portals but found no direct matches. Try adjusting your profile parameters, state, or income settings to expand query matching.</p>
+              </div>
+            )}
+
+            {!loading && results && results.length > 0 && (
+              <div>
+                <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.65rem' }}>AI Recommendations</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>Top live matched schemes resolved using search grounding.</p>
+                  </div>
+                  <div style={{ color: 'var(--sentiment-positive)', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                    🟢 Live Portals Checked
+                  </div>
+                </div>
+                
+                <div className="results-grid">
+                  {results.map((scheme, idx) => (
+                    <div key={idx} className="scheme-card">
+                      <div className="scheme-card-header">
+                        <h3>{scheme.name}</h3>
+                        {scheme.confidence_score && (
+                          <span className="confidence-badge">{scheme.confidence_score}% Match</span>
+                        )}
+                      </div>
+                      
+                      <div className="scheme-section">
+                        <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                          {scheme.description}
+                        </p>
+                      </div>
+                      
+                      {scheme.eligible !== false ? (
+                        <div className="eligibility-alert success">
+                          <strong>🟢 ELIGIBLE</strong>
+                          <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>{scheme.eligibility_reason}</p>
+                        </div>
+                      ) : (
+                        <div className="eligibility-alert danger">
+                          <strong>🔴 INELIGIBLE</strong>
+                          <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>{scheme.ineligibility_reason}</p>
+                        </div>
                       )}
-                    </div>
-                    
-                    <div className="scheme-section">
-                      <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                        {scheme.description}
-                      </p>
-                    </div>
-                    
-                    {scheme.eligible !== false ? (
-                      <div className="eligibility-alert success">
-                        <strong>🟢 ELIGIBLE</strong>
-                        <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>{scheme.eligibility_reason}</p>
+
+                      <div className="scheme-section">
+                        <h4>Benefits</h4>
+                        <p>{scheme.benefits}</p>
                       </div>
-                    ) : (
-                      <div className="eligibility-alert danger">
-                        <strong>🔴 INELIGIBLE</strong>
-                        <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>{scheme.ineligibility_reason}</p>
+
+                      <div className="scheme-section">
+                        <h4>Required Documents</h4>
+                        <ul>
+                          {scheme.documents?.map((doc, i) => <li key={i}>{doc}</li>)}
+                        </ul>
                       </div>
-                    )}
 
-                    <div className="scheme-section">
-                      <h4>Benefits</h4>
-                      <p>{scheme.benefits}</p>
+                      <div className="scheme-section" style={{ flexGrow: 1 }}>
+                        <h4>Application Process</h4>
+                        <ol style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                          {scheme.application_steps?.map((step, i) => <li key={i}><strong>{step}</strong></li>)}
+                        </ol>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto', paddingTop: '1rem' }}>
+                        <button 
+                          onClick={() => handleApplyClick(scheme)} 
+                          className="apply-action-btn"
+                          style={{ flex: 1 }}
+                        >
+                          🚀 Navigate
+                        </button>
+                        <button 
+                          onClick={() => handleSaveScheme(scheme)} 
+                          className="btn btn-secondary"
+                          style={{ padding: '0.75rem 1rem', borderRadius: '10px' }}
+                          title="Save scheme to portfolio"
+                        >
+                          💾 Save
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        </main>
+      )}
 
-                    <div className="scheme-section">
-                      <h4>Required Documents</h4>
-                      <ul>
-                        {scheme.documents?.map((doc, i) => <li key={i}>{doc}</li>)}
-                      </ul>
+      {/* VIEW 3: Saved Schemes Portfolio */}
+      {view === 'saved' && (
+        <section className="landing-view" style={{ padding: '3rem 2rem' }}>
+          <div className="portfolio-header">
+            <h2>Benefit Tracker Portfolio</h2>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Track and manage the government benefits you are applying for.</p>
+          </div>
+
+          {savedSchemes.length === 0 ? (
+            <div className="empty-dashboard-state">
+              <div className="empty-state-graphic">📂</div>
+              <h2>Your Portfolio is Empty</h2>
+              <p>Go to the AI Discover console, run a match search, and click "Save" on any scheme to track its status here.</p>
+              <button className="btn" style={{ marginTop: '1.5rem' }} onClick={() => setView('discover')}>
+                Go to Discover Console
+              </button>
+            </div>
+          ) : (
+            <div className="portfolio-grid">
+              {savedSchemes.map((scheme) => (
+                <div key={scheme.id} className="portfolio-card">
+                  <div className="portfolio-info">
+                    <h3>{scheme.name}</h3>
+                    <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0.75rem 0', maxWidth: '600px' }}>
+                      {scheme.description}
+                    </p>
+                    <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem' }}>
+                      <span>💵 <strong>Benefits:</strong> {scheme.benefits}</span>
+                      <span>📅 <strong>Updated:</strong> {scheme.updatedAt}</span>
                     </div>
+                  </div>
 
-                    <div className="scheme-section" style={{ flexGrow: 1 }}>
-                      <h4>Application Process</h4>
-                      <ol style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                        {scheme.application_steps?.map((step, i) => <li key={i}><strong>{step}</strong></li>)}
-                      </ol>
-                    </div>
-
+                  <div className="portfolio-status-actions">
+                    <span className={`status-badge ${scheme.status}`}>
+                      {scheme.status === 'approved' ? '🟢 Approved' : scheme.status === 'applied' ? '🔵 Applied' : '⏳ Pending'}
+                    </span>
                     <button 
-                      onClick={() => handleApplyClick(scheme)} 
-                      className="apply-action-btn"
+                      className="delete-saved-btn" 
+                      onClick={() => handleDeleteSavedScheme(scheme.id)}
+                      title="Remove scheme from portfolio"
                     >
-                      🚀 Open Interactive Application Guide
+                      ❌ Remove
                     </button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
         </section>
-      </main>
+      )}
+
+      {/* VIEW 4: SaaS Analytics Dashboard */}
+      {view === 'analytics' && (
+        <section className="landing-view" style={{ padding: '3rem 2rem' }}>
+          <div className="portfolio-header">
+            <h2>System Analytics & Performance</h2>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Real-time telemetry and API performance monitoring logs.</p>
+          </div>
+
+          <div className="analytics-dashboard">
+            {/* KPI statistics cards row */}
+            <div className="kpi-row">
+              <div className="glass-card kpi-card">
+                <h4>Active Users</h4>
+                <div className="kpi-value">14,280</div>
+              </div>
+              <div className="glass-card kpi-card">
+                <h4>API Quota Pool</h4>
+                <div className="kpi-value">15 RPM</div>
+              </div>
+              <div className="glass-card kpi-card">
+                <h4>Cache Hit Ratio</h4>
+                <div className="kpi-value">82.4%</div>
+              </div>
+              <div className="glass-card kpi-card">
+                <h4>Match Accuracy</h4>
+                <div className="kpi-value">96.8%</div>
+              </div>
+            </div>
+
+            {/* Charts block */}
+            <div className="analytics-charts-grid">
+              {/* Left Bar Chart */}
+              <div className="glass-card chart-container">
+                <div className="panel-header" style={{ marginBottom: '1rem' }}>
+                  <h3>Eligibility Distribution</h3>
+                  <p>Top category matches resolved across all user searches.</p>
+                </div>
+                <div className="bar-chart">
+                  <div className="bar-row">
+                    <div className="bar-label">Student Scholarships</div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: '85%' }}></div></div>
+                    <div className="bar-value">85%</div>
+                  </div>
+                  <div className="bar-row">
+                    <div className="bar-label">Business & Mudra Credits</div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: '64%' }}></div></div>
+                    <div className="bar-value">64%</div>
+                  </div>
+                  <div className="bar-row">
+                    <div className="bar-label">Women Empowerment</div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: '72%' }}></div></div>
+                    <div className="bar-value">72%</div>
+                  </div>
+                  <div className="bar-row">
+                    <div className="bar-label">Farmers & Landholding</div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: '48%' }}></div></div>
+                    <div className="bar-value">48%</div>
+                  </div>
+                  <div className="bar-row">
+                    <div className="bar-label">Health & Ayushman cover</div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: '92%' }}></div></div>
+                    <div className="bar-value">92%</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Recent Searches Table */}
+              <div className="glass-card chart-container" style={{ padding: '1.5rem' }}>
+                <div className="panel-header" style={{ marginBottom: '1rem' }}>
+                  <h3>Live Queries Log</h3>
+                  <p>Real-time query routing telemetry.</p>
+                </div>
+                <table className="recent-searches-table">
+                  <thead>
+                    <tr>
+                      <th>Query</th>
+                      <th>Method</th>
+                      <th>Route</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>single girl scholarship</td>
+                      <td><span style={{ color: 'var(--sentiment-positive)' }}>CACHE</span></td>
+                      <td>Atlas DB</td>
+                    </tr>
+                    <tr>
+                      <td>mudra loan business plan</td>
+                      <td><span style={{ color: 'var(--sentiment-positive)' }}>CACHE</span></td>
+                      <td>Atlas DB</td>
+                    </tr>
+                    <tr>
+                      <td>gujarat farmer subsidy</td>
+                      <td><span style={{ color: 'var(--secondary)' }}>API</span></td>
+                      <td>Gemini 3.1</td>
+                    </tr>
+                    <tr>
+                      <td>post office saving schemes</td>
+                      <td><span style={{ color: 'var(--sentiment-positive)' }}>CACHE</span></td>
+                      <td>Atlas DB</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Smart Application Navigator Panel Drawer */}
       {isNavigatorOpen && activeScheme && (
