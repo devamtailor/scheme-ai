@@ -130,10 +130,14 @@ function App() {
       });
       
       const data = await response.json();
-      setChatMessages([...newContext, { role: 'assistant', text: data.text }]);
+      if (data.error) {
+        setChatMessages([...newContext, { role: 'assistant', text: `⚠️ ${data.error}` }]);
+      } else {
+        setChatMessages([...newContext, { role: 'assistant', text: data.text || "I couldn't retrieve a response." }]);
+      }
     } catch (err) {
       console.error(err);
-      setChatMessages([...newContext, { role: 'assistant', text: "Sorry, I'm having trouble connecting to the server." }]);
+      setChatMessages([...newContext, { role: 'assistant', text: "⚠️ Sorry, I'm having trouble connecting to the server." }]);
     } finally {
       setIsAssistantTyping(false);
     }
