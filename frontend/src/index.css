@@ -24,6 +24,7 @@
   --border: rgba(255, 255, 255, 0.08); /* More visible clean border */
   --text-main: #f8fafc;        /* High-contrast grey/white */
   --text-muted: #94a3b8;       /* Slate text */
+  --text-card-content: #ffffff; /* Maximum contrast pure white text for readability */
   --card-bg: rgba(10, 14, 26, 0.65);
   --input-bg: rgba(3, 7, 18, 0.55);
   --nav-bg: rgba(3, 7, 18, 0.75);
@@ -40,6 +41,7 @@
   --border: #e2e8f0;           /* Soft border */
   --text-main: #0f172a;        /* High-contrast slate charcoal */
   --text-muted: #475569;       /* Slate gray text */
+  --text-card-content: #0f172a; /* Maximum contrast dark text for readability */
   --card-bg: #ffffff;
   --input-bg: #f8fafc;
   --nav-bg: rgba(255, 255, 255, 0.85);
@@ -608,30 +610,61 @@ select.form-control {
 }
 
 .scheme-section {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .scheme-section h4 {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--primary); /* Glowing accent header color */
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.4rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
 }
 
 .scheme-section p {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 500; /* Medium weight for high clarity */
+  color: var(--text-card-content);
 }
 
 .scheme-section ul {
-  padding-left: 1.25rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  list-style: none; /* Premium bullet-free custom indicators */
+  padding-left: 0;
+  margin: 0.5rem 0 0 0;
 }
 
 .scheme-section li {
-  margin-bottom: 0.25rem;
+  position: relative;
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 500;
+  color: var(--text-card-content);
+}
+
+.scheme-section li::before {
+  content: "•";
+  position: absolute;
+  left: 0.15rem;
+  top: -1px;
+  color: var(--accent); /* Elegant accent bullet points */
+  font-weight: 900;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.scheme-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  font-weight: 500;
 }
 
 .apply-action-btn {

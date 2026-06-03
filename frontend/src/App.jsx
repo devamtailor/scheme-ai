@@ -649,7 +649,7 @@ function App() {
                       </div>
                       
                       <div className="scheme-section">
-                        <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                        <p className="scheme-description">
                           {scheme.description}
                         </p>
                       </div>
